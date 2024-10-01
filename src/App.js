@@ -9,7 +9,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<BankFormPage />} />
-        <Route path="/bank-detail-list" element={<BankDetailsList />} />
+        <Route path="/bank-details-list" element={<BankDetailsList />} />
       </Routes>
     </Router>
   );

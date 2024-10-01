@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Formik, Form } from "formik";
 import TextInput from "./TextInput";
 import SelectInput from "./SelectInput";
-import { useDispatch } from "react-redux";
-import { saveFormData } from "../redux/formSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { saveFormDataAsync } from "../redux/formSlice"; // Updated import for async action
 import { basicSchema } from "../schema/basicSchema";
 import Card from "./Card";
 import { useLocation } from "react-router-dom";
@@ -11,7 +11,8 @@ import { useLocation } from "react-router-dom";
 const BankForm = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const [isSubmitted, setIsSubmitted] = useState(false); // New flag for form submission
+  const formStatus = useSelector((state) => state.form.status); // Track form status
+
   const [initialValues, setInitialValues] = useState({
     bankName: "",
     ifscCode: "",
@@ -36,21 +37,18 @@ const BankForm = () => {
     { value: "SBI", label: "SBI" },
     { value: "Bank of Maharashtra", label: "Bank of Maharashtra" },
   ];
-
   const cityOptions = [
     { value: "Thane", label: "Thane" },
     { value: "Mulund", label: "Mulund" },
     { value: "Bhandup", label: "Bhandup" },
     { value: "Ghatkopar", label: "Ghatkopar" },
   ];
-
   const stateOptions = [
     { value: "Maharashtra", label: "Maharashtra" },
     { value: "Delhi", label: "Delhi" },
     { value: "Karnataka", label: "Karnataka" },
     { value: "Kashmir", label: "Kashmir" },
   ];
-
   const countryOptions = [
     { value: "India", label: "India" },
     { value: "Dubai", label: "Dubai" },
@@ -84,138 +82,126 @@ const BankForm = () => {
       localStorage.setItem("bankFormData", JSON.stringify(updatedData));
     }
 
-    dispatch(saveFormData(values));
-    resetForm(); // Resets the form fields
-    setInitialValues({ // Clear initialValues after saving
-      bankName: "",
-      ifscCode: "",
-      branchName: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      state: "",
-      country: "",
-      pincode: "",
-      accountHolderName: "",
-      accountNumber: "",
-      email: "",
+    // Dispatch async action instead of regular action
+    dispatch(saveFormDataAsync(values)).then(() => {
+      resetForm(); // Reset the form after async submission
     });
-    setIsSubmitted(true); // Set the flag to true after form submission
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={basicSchema}
-      onSubmit={onSubmit}
-      enableReinitialize={true}
-    >
-      <Form>
-        {/* General Information Card */}
-        <Card title="General Information">
-          <div className="row">
-            <div className="col-md-6">
-              <SelectInput
-                label="Bank Name*"
-                name="bankName"
-                options={bankOptions}
-              />
+    <div>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={basicSchema}
+        onSubmit={onSubmit}
+        enableReinitialize={true}
+      >
+        <Form>
+          {/* General Information Card */}
+          <Card title="General Information">
+            <div className="row">
+              <div className="col-md-6">
+                <SelectInput
+                  label="Bank Name*"
+                  name="bankName"
+                  options={bankOptions}
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="IFSC Code*"
+                  placeholder="Enter IFSC code"
+                  name="ifscCode"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Branch Name*"
+                  placeholder="Enter Branch name"
+                  name="branchName"
+                />
+              </div>
             </div>
-            <div className="col-md-6">
-              <TextInput
-                label="IFSC Code*"
-                placeholder="Enter IFSC code"
-                name="ifscCode"
-              />
-            </div>
-            <div className="col-md-6">
-              <TextInput
-                label="Branch Name*"
-                placeholder="Enter Branch name"
-                name="branchName"
-              />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Address Info Card */}
-        <Card title="Address Information">
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput
-                label="Address Line 1*"
-                placeholder="Enter Address"
-                name="addressLine1"
-              />
+          {/* Address Info Card */}
+          <Card title="Address Information">
+            <div className="row">
+              <div className="col-md-6">
+                <TextInput
+                  label="Address Line 1*"
+                  placeholder="Enter Address"
+                  name="addressLine1"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Address Line 2"
+                  placeholder="Enter Address"
+                  name="addressLine2"
+                />
+              </div>
             </div>
-            <div className="col-md-6">
-              <TextInput
-                label="Address Line 2"
-                placeholder="Enter Address"
-                name="addressLine2"
-              />
+            <div className="row">
+              <div className="col-md-4">
+                <SelectInput label="City*" name="city" options={cityOptions} />
+              </div>
+              <div className="col-md-4">
+                <SelectInput label="State*" name="state" options={stateOptions} />
+              </div>
+              <div className="col-md-4">
+                <SelectInput
+                  label="Country*"
+                  name="country"
+                  options={countryOptions}
+                />
+              </div>
+              <div className="col-md-4">
+                <TextInput
+                  label="Pincode*"
+                  placeholder="Enter Pincode"
+                  name="pincode"
+                />
+              </div>
             </div>
-          </div>
-          <div className="row">
-            <div className="col-md-4">
-              <SelectInput label="City*" name="city" options={cityOptions} />
-            </div>
-            <div className="col-md-4">
-              <SelectInput label="State*" name="state" options={stateOptions} />
-            </div>
-            <div className="col-md-4">
-              <SelectInput
-                label="Country*"
-                name="country"
-                options={countryOptions}
-              />
-            </div>
-            <div className="col-md-4">
-              <TextInput
-                label="Pincode*"
-                placeholder="Enter Pincode"
-                name="pincode"
-              />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Customer Info Card */}
-        <Card title="Customer Information">
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput
-                label="Account Holder Name*"
-                placeholder="Enter Full name"
-                name="accountHolderName"
-              />
+          {/* Customer Info Card */}
+          <Card title="Customer Information">
+            <div className="row">
+              <div className="col-md-6">
+                <TextInput
+                  label="Account Holder Name*"
+                  placeholder="Enter Full name"
+                  name="accountHolderName"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Account Number*"
+                  placeholder="Enter Account number"
+                  name="accountNumber"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Email*"
+                  name="email"
+                  placeholder="Enter Email address"
+                  type="email"
+                />
+              </div>
             </div>
-            <div className="col-md-6">
-              <TextInput
-                label="Account Number*"
-                placeholder="Enter Account number"
-                name="accountNumber"
-              />
-            </div>
-            <div className="col-md-6">
-              <TextInput
-                label="Email*"
-                name="email"
-                placeholder="Enter Email address"
-                type="email"
-              />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <div className="text-center mt-4 d-flex justify-content-start">
-          <button type="submit" className="btn btn-primary">
-            Submit
-          </button>
-          
-        </div>
-      </Form>
-    </Formik>
+          <div className="text-center mt-4 d-flex justify-content-start">
+            <button type="submit" className="btn btn-primary">
+              {formStatus === 'loading' ? 'Submitting...' : 'Submit'}
+            </button>
+          </div>
+        </Form>
+      </Formik>
+    </div>
   );
 };
 

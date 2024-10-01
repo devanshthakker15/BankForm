@@ -25,6 +25,10 @@ const BankDetailsList = () => {
     localStorage.setItem("bankFormData", JSON.stringify(updatedData));
   };
 
+  const handleBackToForm = () => {
+    navigate("/"); // Navigate to the form without any state (fresh form)
+  };
+
   const filteredData = bankData.filter((item) => 
     item.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.accountHolderName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -89,9 +93,15 @@ const BankDetailsList = () => {
           )}
         </tbody>
       </table>
+
+      {/* Back to Form Button */}
+      <div className="text-center mt-4 d-flex justify-content-start">
+        <button className="btn btn-secondary" onClick={handleBackToForm}>
+          Back to Form
+        </button>
+      </div>
     </div>
   );
 };
 
 export default BankDetailsList;
-    
