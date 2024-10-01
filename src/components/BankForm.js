@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 const BankForm = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const [isSubmitted, setIsSubmitted] = useState(false); // New flag for form submission
   const [initialValues, setInitialValues] = useState({
     bankName: "",
     ifscCode: "",
@@ -25,6 +26,7 @@ const BankForm = () => {
     accountNumber: "",
     email: "",
   });
+
   const bankOptions = [
     { value: "Bank of Baroda", label: "Bank of Baroda" },
     { value: "HDFC Bank", label: "HDFC Bank" },
@@ -34,30 +36,26 @@ const BankForm = () => {
     { value: "SBI", label: "SBI" },
     { value: "Bank of Maharashtra", label: "Bank of Maharashtra" },
   ];
- 
- 
+
   const cityOptions = [
     { value: "Thane", label: "Thane" },
     { value: "Mulund", label: "Mulund" },
     { value: "Bhandup", label: "Bhandup" },
     { value: "Ghatkopar", label: "Ghatkopar" },
   ];
- 
- 
+
   const stateOptions = [
     { value: "Maharashtra", label: "Maharashtra" },
     { value: "Delhi", label: "Delhi" },
     { value: "Karnataka", label: "Karnataka" },
     { value: "Kashmir", label: "Kashmir" },
   ];
- 
- 
+
   const countryOptions = [
     { value: "India", label: "India" },
     { value: "Dubai", label: "Dubai" },
     { value: "USA", label: "USA" },
   ];
- 
 
   useEffect(() => {
     if (location.state && location.state.id !== undefined) {
@@ -87,8 +85,22 @@ const BankForm = () => {
     }
 
     dispatch(saveFormData(values));
-    resetForm();
-    // alert("Form Submitted");
+    resetForm(); // Resets the form fields
+    setInitialValues({ // Clear initialValues after saving
+      bankName: "",
+      ifscCode: "",
+      branchName: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      country: "",
+      pincode: "",
+      accountHolderName: "",
+      accountNumber: "",
+      email: "",
+    });
+    setIsSubmitted(true); // Set the flag to true after form submission
   };
 
   return (
@@ -200,6 +212,7 @@ const BankForm = () => {
           <button type="submit" className="btn btn-primary">
             Submit
           </button>
+          
         </div>
       </Form>
     </Formik>

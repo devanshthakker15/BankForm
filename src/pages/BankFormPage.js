@@ -7,6 +7,8 @@ const BankFormPage = () => {
   return (
     <div className="body">
       <div className="container mt-5">
+
+
         {/* View Submissions Button */}
         <div className="text-right mb-4 d-flex justify-content-end">
           <Link to="/bank-details-list">
@@ -20,6 +22,7 @@ const BankFormPage = () => {
         </div>
         <BankForm />
       </div>
+      
       <footer className="mt-5 d-flex justify-content-center">
         <p>&copy; 2024 Our Company. All Rights Reserved.</p>
       </footer>
