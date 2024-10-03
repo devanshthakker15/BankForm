@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Formik, Form } from "formik";
 import TextInput from "./TextInput";
 import SelectInput from "./SelectInput";
@@ -6,27 +6,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { saveFormDataAsync } from "../redux/formSlice"; // Updated import for async action
 import { basicSchema } from "../schema/basicSchema";
 import Card from "./Card";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // Added useNavigate
 
 const BankForm = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const formStatus = useSelector((state) => state.form.status); // Track form status
-
-  const [initialValues, setInitialValues] = useState({
-    bankName: "",
-    ifscCode: "",
-    branchName: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    country: "",
-    pincode: "",
-    accountHolderName: "",
-    accountNumber: "",
-    email: "",
-  });
+  const navigate = useNavigate(); // Initialize useNavigate
+  const formStatus = useSelector((state) => state.form.status);
 
   const bankOptions = [
     { value: "Bank of Baroda", label: "Bank of Baroda" },
@@ -37,54 +23,83 @@ const BankForm = () => {
     { value: "SBI", label: "SBI" },
     { value: "Bank of Maharashtra", label: "Bank of Maharashtra" },
   ];
+
   const cityOptions = [
     { value: "Thane", label: "Thane" },
     { value: "Mulund", label: "Mulund" },
     { value: "Bhandup", label: "Bhandup" },
     { value: "Ghatkopar", label: "Ghatkopar" },
   ];
+
   const stateOptions = [
     { value: "Maharashtra", label: "Maharashtra" },
     { value: "Delhi", label: "Delhi" },
     { value: "Karnataka", label: "Karnataka" },
     { value: "Kashmir", label: "Kashmir" },
   ];
+
   const countryOptions = [
     { value: "India", label: "India" },
     { value: "Dubai", label: "Dubai" },
     { value: "USA", label: "USA" },
   ];
 
-  useEffect(() => {
+ 
+  const initialValues = useMemo(() => {
     if (location.state && location.state.id !== undefined) {
       const storedData = JSON.parse(localStorage.getItem("bankFormData")) || [];
-      const dataToEdit = storedData.find(
-        (item) => item.id === location.state.id
-      );
-      if (dataToEdit) {
-        setInitialValues(dataToEdit);
-      }
+      const dataToEdit = storedData.find(item => item.id === location.state.id) || {};
+      return {
+        bankName: dataToEdit.bankName || "",
+        ifscCode: dataToEdit.ifscCode || "",
+        branchName: dataToEdit.branchName || "",
+        addressLine1: dataToEdit.addressLine1 || "",
+        addressLine2: dataToEdit.addressLine2 || "",
+        city: dataToEdit.city || "",
+        state: dataToEdit.state || "",
+        country: dataToEdit.country || "",
+        pincode: dataToEdit.pincode || "",
+        accountHolderName: dataToEdit.accountHolderName || "",
+        accountNumber: dataToEdit.accountNumber || "",
+        email: dataToEdit.email || "",
+      };
     }
-  }, [location.state]);
+    return {
+      bankName: "",
+      ifscCode: "",
+      branchName: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      country: "",
+      pincode: "",
+      accountHolderName: "",
+      accountNumber: "",
+      email: "",
+    };
+  }, [location.state]); 
 
   const onSubmit = (values, { resetForm }) => {
     const existingData = JSON.parse(localStorage.getItem("bankFormData")) || [];
+    
     if (values.id !== undefined) {
-      const updatedData = existingData.map((item) =>
+      const updatedData = existingData.map(item =>
         item.id === values.id ? values : item
       );
       localStorage.setItem("bankFormData", JSON.stringify(updatedData));
     } else {
+      const newId = existingData.length ? Math.max(...existingData.map(item => item.id)) + 1 : 0;
       const updatedData = [
         ...existingData,
-        { ...values, id: existingData.length },
+        { ...values, id: newId },
       ];
       localStorage.setItem("bankFormData", JSON.stringify(updatedData));
     }
 
-    // Dispatch async action instead of regular action
     dispatch(saveFormDataAsync(values)).then(() => {
-      resetForm(); // Reset the form after async submission
+      resetForm();
+      navigate(-1); // Navigate back to list
     });
   };
 
@@ -94,7 +109,7 @@ const BankForm = () => {
         initialValues={initialValues}
         validationSchema={basicSchema}
         onSubmit={onSubmit}
-        enableReinitialize={true}
+        enableReinitialize={true} // Enable reinitialization
       >
         <Form>
           {/* General Information Card */}
