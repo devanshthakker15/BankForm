@@ -1,18 +1,33 @@
-import React, { useMemo } from "react";
-import { Formik, Form, FieldArray } from "formik";
+import React, { useEffect, useState } from "react";
+import { Formik, Form } from "formik";
 import TextInput from "./TextInput";
 import SelectInput from "./SelectInput";
 import { useDispatch, useSelector } from "react-redux";
 import { saveFormDataAsync } from "../redux/formSlice"; // Updated import for async action
 import { basicSchema } from "../schema/basicSchema";
 import Card from "./Card";
-import { useLocation, useNavigate } from "react-router-dom"; // Added useNavigate
+import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 
 const BankForm = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate(); // Initialize useNavigate
-  const formStatus = useSelector((state) => state.form.status);
+  const formStatus = useSelector((state) => state.form.status); // Track form status
+
+  const [initialValues, setInitialValues] = useState({
+    bankName: "",
+    ifscCode: "",
+    branchName: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "",
+    pincode: "",
+    accountHolderName: "",
+    accountNumber: "",
+    email: "",
+  });
 
   const bankOptions = [
     { value: "Bank of Baroda", label: "Bank of Baroda" },
@@ -23,91 +38,55 @@ const BankForm = () => {
     { value: "SBI", label: "SBI" },
     { value: "Bank of Maharashtra", label: "Bank of Maharashtra" },
   ];
-
   const cityOptions = [
     { value: "Thane", label: "Thane" },
     { value: "Mulund", label: "Mulund" },
     { value: "Bhandup", label: "Bhandup" },
     { value: "Ghatkopar", label: "Ghatkopar" },
   ];
-
   const stateOptions = [
     { value: "Maharashtra", label: "Maharashtra" },
     { value: "Delhi", label: "Delhi" },
     { value: "Karnataka", label: "Karnataka" },
     { value: "Kashmir", label: "Kashmir" },
   ];
-
   const countryOptions = [
     { value: "India", label: "India" },
     { value: "Dubai", label: "Dubai" },
     { value: "USA", label: "USA" },
   ];
 
-  // Initialize form values, now with an array for multiple addresses
-  const initialValues = useMemo(() => {
+  useEffect(() => {
     if (location.state && location.state.id !== undefined) {
       const storedData = JSON.parse(localStorage.getItem("bankFormData")) || [];
-      const dataToEdit =
-        storedData.find((item) => item.id === location.state.id) || {};
-      return {
-        bankName: dataToEdit.bankName || "",
-        ifscCode: dataToEdit.ifscCode || "",
-        branchName: dataToEdit.branchName || "",
-        accountHolderName: dataToEdit.accountHolderName || "",
-        accountNumber: dataToEdit.accountNumber || "",
-        email: dataToEdit.email || "",
-        addresses: dataToEdit.addresses || [
-          {
-            addressLine1: "",
-            addressLine2: "",
-            city: "",
-            state: "",
-            country: "",
-            pincode: "",
-          },
-        ],
-      };
+      const dataToEdit = storedData.find(
+        (item) => item.id === location.state.id
+      );
+      if (dataToEdit) {
+        setInitialValues(dataToEdit);
+      }
     }
-    return {
-      bankName: "",
-      ifscCode: "",
-      branchName: "",
-      accountHolderName: "",
-      accountNumber: "",
-      email: "",
-      addresses: [
-        {
-          addressLine1: "",
-          addressLine2: "",
-          city: "",
-          state: "",
-          country: "",
-          pincode: "",
-        },
-      ], 
-    };
   }, [location.state]);
 
   const onSubmit = (values, { resetForm }) => {
     const existingData = JSON.parse(localStorage.getItem("bankFormData")) || [];
-
     if (values.id !== undefined) {
       const updatedData = existingData.map((item) =>
         item.id === values.id ? values : item
       );
       localStorage.setItem("bankFormData", JSON.stringify(updatedData));
     } else {
-      const newId = existingData.length
-        ? Math.max(...existingData.map((item) => item.id)) + 1
-        : 0;
-      const updatedData = [...existingData, { ...values, id: newId }];
+      const updatedData = [
+        ...existingData,
+        { ...values, id: existingData.length },
+      ];
       localStorage.setItem("bankFormData", JSON.stringify(updatedData));
     }
 
+    // Dispatch async action instead of regular action
     dispatch(saveFormDataAsync(values)).then(() => {
-      resetForm();
-      navigate(-1); // Navigate back to list
+      resetForm(); // Reset the form after async submission
+      navigate(-1); // Navigate back to the submissions page
     });
   };
 
@@ -117,158 +96,112 @@ const BankForm = () => {
         initialValues={initialValues}
         validationSchema={basicSchema}
         onSubmit={onSubmit}
-        enableReinitialize={true} // Enable reinitialization
+        enableReinitialize={true}
       >
-        {({ values }) => (
-          <Form>
-            {/* General Information Card */}
-            <Card title="General Information">
-              <div className="row">
-                <div className="col-md-6">
-                  <SelectInput
-                    label="Bank Name*"
-                    name="bankName"
-                    options={bankOptions}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <TextInput
-                    label="IFSC Code*"
-                    placeholder="Enter IFSC code"
-                    name="ifscCode"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <TextInput
-                    label="Branch Name*"
-                    placeholder="Enter Branch name"
-                    name="branchName"
-                  />
-                </div>
+        <Form>
+          {/* General Information Card */}
+          <Card title="General Information">
+            <div className="row">
+              <div className="col-md-6">
+                <SelectInput
+                  label="Bank Name*"
+                  name="bankName"
+                  options={bankOptions}
+                />
               </div>
-            </Card>
-
-            {/* Multiple Addresses using FieldArray */}
-            <FieldArray name="addresses">
-              {({remove, push }) => (
-                <Card title="Address Information">
-                  {values.addresses.length > 0 &&
-                    values.addresses.map((address, index) => (
-                      <div key={index}>
-                        <div className="row mt-3">
-                          <div className="col-md-6">
-                            <TextInput
-                              label="Address Line 1*"
-                              placeholder="Enter Address"
-                              name={`addresses.${index}.addressLine1`}
-                            />
-                          </div>
-                          <div className="col-md-6">
-                            <TextInput
-                              label="Address Line 2"
-                              placeholder="Enter Address"
-                              name={`addresses.${index}.addressLine2`}
-                            />
-                          </div>
-                        </div>
-                        <div className="row">
-                          <div className="col-md-3">
-                            <SelectInput
-                              label="City*"
-                              name={`addresses.${index}.city`}
-                              options={cityOptions}
-                            />
-                          </div>
-                          <div className="col-md-3">
-                            <SelectInput
-                              label="State*"
-                              name={`addresses.${index}.state`}
-                              options={stateOptions}
-                            />
-                          </div>
-                          <div className="col-md-3">
-                            <SelectInput
-                              label="Country*"
-                              name={`addresses.${index}.country`}
-                              options={countryOptions}
-                            />
-                          </div>
-                          <div className="col-md-3 mt-2">
-                            <TextInput
-                              label="Pincode*"
-                              placeholder="Enter Pincode"
-                              name={`addresses.${index}.pincode`}
-                            />
-                          </div>
-                        </div>
-                        
-
-                        <div className="d-flex justify-content-between">
-                        <button
-                          type="button"
-                          className="btn btn-primary mt-2"
-                          onClick={() =>
-                            push({
-                              addressLine1: "",
-                              addressLine2: "",
-                              city: "",
-                              state: "",
-                              country: "",
-                              pincode: "",
-                            })
-                          }
-                        >
-                          Add Another Address
-                        </button>
-                          <button
-                            type="button"
-                            className="btn btn-danger mt-2"
-                            onClick={() => remove(index)}
-                          >
-                            Remove Address
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </Card>
-              )}
-            </FieldArray>
-
-            {/* Customer Info Card */}
-            <Card title="Customer Information">
-              <div className="row">
-                <div className="col-md-6">
-                  <TextInput
-                    label="Account Holder Name*"
-                    placeholder="Enter Full name"
-                    name="accountHolderName"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <TextInput
-                    label="Account Number*"
-                    placeholder="Enter Account number"
-                    name="accountNumber"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <TextInput
-                    label="Email*"
-                    name="email"
-                    placeholder="Enter Email address"
-                    type="email"
-                  />
-                </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="IFSC Code*"
+                  placeholder="Enter IFSC code"
+                  name="ifscCode"
+                />
               </div>
-            </Card>
-
-            <div className="text-center mt-4 d-flex justify-content-start">
-              <button type="submit" className="btn btn-primary">
-                {formStatus === "loading" ? "Submitting..." : "Submit"}
-              </button>
+              <div className="col-md-6">
+                <TextInput
+                  label="Branch Name*"
+                  placeholder="Enter Branch name"
+                  name="branchName"
+                />
+              </div>
             </div>
-          </Form>
-        )}
+          </Card>
+
+          {/* Address Info Card */}
+          <Card title="Address Information">
+            <div className="row">
+              <div className="col-md-6">
+                <TextInput
+                  label="Address Line 1*"
+                  placeholder="Enter Address"
+                  name="addressLine1"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Address Line 2"
+                  placeholder="Enter Address"
+                  name="addressLine2"
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-4">
+                <SelectInput label="City*" name="city" options={cityOptions} />
+              </div>
+              <div className="col-md-4">
+                <SelectInput label="State*" name="state" options={stateOptions} />
+              </div>
+              <div className="col-md-4">
+                <SelectInput
+                  label="Country*"
+                  name="country"
+                  options={countryOptions}
+                />
+              </div>
+              <div className="col-md-4">
+                <TextInput
+                  label="Pincode*"
+                  placeholder="Enter Pincode"
+                  name="pincode"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Customer Info Card */}
+          <Card title="Customer Information">
+            <div className="row">
+              <div className="col-md-6">
+                <TextInput
+                  label="Account Holder Name*"
+                  placeholder="Enter Full name"
+                  name="accountHolderName"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Account Number*"
+                  placeholder="Enter Account number"
+                  name="accountNumber"
+                />
+              </div>
+              <div className="col-md-6">
+                <TextInput
+                  label="Email*"
+                  name="email"
+                  placeholder="Enter Email address"
+                  type="email"
+                />
+              </div>
+            </div>
+          </Card>
+
+          <div className="text-center mt-4 d-flex justify-content-start">
+            <button type="submit" className="btn btn-primary">
+              {formStatus === "loading" ? "Submitting..." : "Submit"}
+            </button>
+          </div>
+        </Form>
       </Formik>
     </div>
   );

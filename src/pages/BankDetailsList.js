@@ -1,30 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Pagination from "../components/Pagination";
 
 const BankDetailsList = () => {
   const [bankData, setBankData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-
   const navigate = useNavigate();
-  const itemsPerPage = 3;
 
   useEffect(() => {
     const storedData = JSON.parse(localStorage.getItem("bankFormData")) || [];
     setBankData(storedData);
-    setFilteredData(storedData);
   }, []);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    const filtered = bankData.filter((item) =>
-      item.bankName.toLowerCase().includes(e.target.value.toLowerCase()) ||
-      item.accountHolderName.toLowerCase().includes(e.target.value.toLowerCase())
-    );
-    setFilteredData(filtered);
-    setCurrentPage(1); 
   };
 
   const handleEdit = (id) => {
@@ -38,19 +26,13 @@ const BankDetailsList = () => {
   };
 
   const handleBackToForm = () => {
-    navigate("/"); 
+    navigate("/"); // Navigate to the form without any state (fresh form)
   };
 
-  //Pagination part constants/functions and calculations
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  // Calculate the entries to display on the current page
-  const startIndex = (currentPage -1) * itemsPerPage;
-  const currentEntries = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const filteredData = bankData.filter((item) => 
+    item.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.accountHolderName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="container mt-5">
@@ -79,8 +61,8 @@ const BankDetailsList = () => {
           </tr>
         </thead>
         <tbody>
-          {currentEntries.length > 0 ? (
-            currentEntries.map((item, index) => (
+          {filteredData.length > 0 ? (
+            filteredData.map((item, index) => (
               <tr key={index}>
                 <td>{item.id}</td>
                 <td>{item.bankName}</td>
@@ -111,17 +93,6 @@ const BankDetailsList = () => {
           )}
         </tbody>
       </table>
-
-
-
-      {/* Pagination Controls */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
-
-
 
       {/* Back to Form Button */}
       <div className="text-center mt-4 d-flex justify-content-start">
